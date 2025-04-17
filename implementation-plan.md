@@ -60,21 +60,21 @@ cogmem/
 
 **Tasks & Implementation Details:**
 
-1.  **Project Setup & Tooling (Infrastructure):**
+1.  **Project Setup & Tooling (Infrastructure) (TDD):**
     *   Initialize Go project (`go mod init`), set up directory structure.
     *   Set up Git repository & basic branching strategy.
-    *   Create `docker-compose.yml` with a `postgres` service using an image supporting `pgvector` (e.g., `pgvector/pgvector:pg15` or official postgres + init script). Expose port for testing.
+    *   Create `docker-compose.yml` with a `postgres` service using an image supporting `pgvector` (e.g., `pgvector/pgvector:pg17` or official postgres + init script). Expose port for testing.
     *   Implement configuration loading (`internal/infrastructure/config`) using Viper, defining `cogmem.Config` struct, loading from `config.yaml`, `.env`, and env vars.
     *   Set up basic logging (`internal/infrastructure/log`).
     *   Establish testing infrastructure: Add `stretchr/testify`, configure Go test runner. Set up `testcontainers-go` for PostgreSQL integration tests.
     *   Define initial CI pipeline (e.g., GitHub Actions) for linting, vetting, building, and running unit & integration tests.
 
-2.  **Domain Layer (Phase 1):**
+2.  **Domain Layer (Phase 1) (TDD):**
     *   Define core entities: `EpisodicMemory`, `PartitionContext` (`internal/domain/entity`). Focus on fields needed for Phase 1 (ID, UserID, EntityID, Content, Embedding, Timestamp, ShareScope, LastAccessed, AccessibilityScore - default 1.0).
     *   Define repository interface: `EpisodicRepository` (`internal/domain/repository`) with methods: `Save(ctx, mem)`, `FindByID(ctx, id, pCtx)`, `FindByVector(ctx, vector, limit, pCtx)`, `FindRecent(ctx, limit, pCtx)`. Methods must accept `PartitionContext`.
     *   *TDD:* Write unit tests for entity validation/creation logic (if any).
 
-3.  **Infrastructure Layer (Persistence - Phase 1):**
+3.  **Infrastructure Layer (Persistence - Phase 1) (TDD):**
     *   Implement `EpisodicRepository` using `pgxpool` (`internal/infrastructure/persistence/postgres`). Connect using `DatabaseURL` from config.
     *   Write DB migration script (`migrations/`) for `episodic_memory` table (SQL definition from ADD). Include `pgvector` extension creation. Use a migration tool like `goose`.
     *   Implement robust partitioning logic within repository methods: dynamically add `WHERE user_id = $1 AND (entity_id IS NULL OR entity_id = $2)` clauses based on `PartitionContext`. Handle `share_scope` filtering if needed for basic 'user' scope initially.
@@ -84,7 +84,7 @@ cogmem/
         *   `FindRecent` returns correctly ordered results.
         *   **Crucially:** Test that queries only return data matching the provided `PartitionContext`, and fail/return empty for incorrect contexts.
 
-4.  **Application Layer (Phase 1):**
+4.  **Application Layer (Phase 1) (TDD):**
     *   Define `MemoryService` interface (`internal/application/port`) and implementation (`internal/application/service`).
     *   Implement use cases: `StoreEpisodic(ctx, pCtx, dto)`, `RetrieveEpisodic(ctx, pCtx, queryDto)`.
     *   Inject `domain.repository.EpisodicRepository`.
@@ -92,7 +92,7 @@ cogmem/
     *   Implement embedding generation logic: For Phase 1, this might be a *placeholder* or call out to a separate embedding service/library (dependency injected). Define embedding dimension based on config.
     *   *TDD:* Write unit tests for `MemoryService`, mocking the `EpisodicRepository` and embedding generation. Test input validation, DTO mapping, and correct repository method calls.
 
-5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 1):**
+5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 1) (TDD):**
     *   Define the public `CogMemClient` interface in `pkg/cogmem/client.go` with methods for Phase 1: `StoreEpisodic`, `RetrieveEpisodic`, `GetEpisodicByID`, `Close`, plus `NewClient` constructor signature.
     *   Define public DTOs (`EpisodicMemoryInput`, `EpisodicMemoryOutput`, `PartitionContext`, `RetrievalQuery` - limited fields) in `pkg/cogmem/dto.go` (or similar).
     *   Implement `NewClient` function in `pkg/cogmem/factory.go` (or similar). It should:
@@ -105,7 +105,7 @@ cogmem/
     *   Implement the internal `client` struct (`pkg/client/client.go`) which holds references to application services and implements the `CogMemClient` interface methods by calling the appropriate service methods. Implement `Close()` to close the DB pool.
     *   *TDD:* Write integration tests for the `NewClient` function: verify config loading, successful initialization with valid config, error handling with invalid config. Write integration tests for the client methods implemented in this phase, ensuring they interact correctly with the underlying services and database (can use test containers).
 
-6.  **Documentation & Examples:**
+6.  **Documentation & Examples (TDD):**
     *   Initialize `README.md` explaining library purpose, setup, and Phase 1 usage.
     *   Add GoDoc comments to public interfaces, structs, and functions.
     *   Provide a simple example in `cmd/` showing how to initialize and use the Phase 1 client methods.
@@ -125,7 +125,7 @@ cogmem/
 
 **Tasks & Implementation Details:**
 
-1.  **Domain Layer (Phase 2):**
+1.  **Domain Layer (Phase 2)(TDD):**
     *   Define `ValenceScore` entity (`internal/domain/entity`) with Polarity, GoalRelevance, Arousal.
     *   Define `ValenceCalculator` interface (`internal/domain/service`) with `Calculate(ctx, text, taskHint) (ValenceScore, error)`.
     *   Add `Valence` field (type `ValenceScore`, stored as JSONB) to `EpisodicMemory` entity.
@@ -136,24 +136,24 @@ cogmem/
     *   Define `SemanticNodeRepository` interface (`internal/domain/repository`) with `Save`, `FindByID`, `FindByNameAndType`.
     *   *TDD:* Unit tests for new entities/validation.
 
-2.  **Infrastructure Layer (Engines - Phase 2):**
+2.  **Infrastructure Layer (Engines - Phase 2)(TDD):**
     *   Implement `ValenceCalculator` (`internal/infrastructure/engine/valence`) using the v1 algorithm (keyword lists, potentially `vader-go`). Make keywords/weights configurable via Viper.
     *   Implement `ScriptExecutor` (`internal/infrastructure/engine/lua`) using `gopher-lua`. Implement sandboxing (disable standard libs per config). Implement safe Go function injection for DB access (`luaSafeFindEpisodic`, etc.) which *must* accept and enforce `PartitionContext`. Handle execution timeouts from config. Capture `print` statements as logs.
     *   *TDD:* Unit tests for `ValenceCalculator` logic. Unit tests for `ScriptExecutor` sandboxing setup. Integration tests for executing Lua scripts that call the injected safe DB functions (using test containers, verifying partitioning is respected within Lua calls).
 
-3.  **Infrastructure Layer (Persistence - Phase 2):**
+3.  **Infrastructure Layer (Persistence - Phase 2)(TDD):**
     *   Update `episodic_memory` migration/schema to add `valence JSONB` column. Update `PostgresEpisodicRepository` to store/retrieve valence and potentially add `WHERE` clauses or `ORDER BY` clauses based on valence filters in `RetrievalQuery`.
     *   Implement `procedural_scripts` table migration/schema. Implement `PostgresScriptRepository`.
     *   Implement `semantic_nodes` table migration/schema. Implement `PostgresSemanticNodeRepository`.
     *   *TDD:* Update `EpisodicRepository` integration tests for valence storage/retrieval/filtering. Write integration tests for `ScriptRepository` and `SemanticNodeRepository`.
 
-4.  **Application Layer (Phase 2):**
+4.  **Application Layer (Phase 2)(TDD):**
     *   Inject `ValenceCalculator` into `MemoryService`. Modify `StoreEpisodic` to calculate and store valence (unless `ExplicitValence` is provided in input). Modify `RetrieveEpisodic` to handle valence filters/sorting from `RetrievalQuery`.
     *   Create `ScriptingService` (`internal/application/service`). Implement `ExecuteScript(ctx, pCtx, scriptName, params)` use case. Inject `ScriptRepository` (to find script code) and `ScriptExecutor`. Ensure `PartitionContext` is passed correctly if needed by script execution context.
     *   Create `NodeService` (`internal/application/service`). Implement `StoreNode`, `GetNodeByID`, `FindNodes`. Inject `SemanticNodeRepository`. Handle DTO/entity mapping.
     *   *TDD:* Update `MemoryService` unit tests. Write unit tests for `ScriptingService` and `NodeService` (mocking repos/engines).
 
-5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 2):**
+5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 2)(TDD):**
     *   Add `ValenceScore` struct to public DTOs. Add `ExplicitValence` to `EpisodicMemoryInput`. Add valence filters/sorting options to `RetrievalQuery`. Add `Valence` to `EpisodicMemoryOutput`.
     *   Add `StoreScript`, `ExecuteScript` methods to `CogMemClient` interface. Add `ScriptExecutionInput/Output` DTOs.
     *   Add `StoreSemanticNode`, `GetSemanticNodeByID`, `FindSemanticNodes` methods to `CogMemClient`. Add `SemanticNodeInput/Output` DTOs.
@@ -161,7 +161,7 @@ cogmem/
     *   Update `NewClient` to initialize new repositories and services.
     *   *TDD:* Update integration tests for `Store/RetrieveEpisodic` to check valence handling. Write integration tests for `StoreScript`, `ExecuteScript`, `StoreSemanticNode`, `GetSemanticNodeByID`, `FindSemanticNodes` client methods.
 
-6.  **Documentation & Examples:**
+6.  **Documentation & Examples (TDD):**
     *   Document Valence Engine v1 logic and configuration.
     *   Document Scripting Engine usage, sandboxing, available safe Lua functions, and error handling.
     *   Document Semantic Node operations.
@@ -183,7 +183,7 @@ cogmem/
 
 **Tasks & Implementation Details:**
 
-1.  **Domain Layer (Phase 3):**
+1.  **Domain Layer (Phase 3)(TDD):**
     *   Add `AccessibilityScore` and `LastAccessed` fields to relevant entities (`EpisodicMemory`, `SemanticNode`).
     *   Define `DecayLogic` interface (`internal/domain/service`) with `ApplyDecay(ctx, pCtx?)`. Context needed if decay applies per-partition.
     *   Add `CausalLinks` field (e.g., `map[string][]uuid.UUID`) to `EpisodicMemory` entity.
@@ -192,7 +192,7 @@ cogmem/
     *   Define `Persona` concept (e.g., a simple string type or struct) in domain.
     *   *TDD:* Unit tests for new/updated entities.
 
-2.  **Infrastructure Layer (Persistence - Phase 3):**
+2.  **Infrastructure Layer (Persistence - Phase 3)(TDD):**
     *   Update migrations/schemas for `episodic_memory` and `semantic_nodes` to include `accessibility_score` (default 1.0) and `last_accessed` (default now). Add `causal_links JSONB` to `episodic_memory`.
     *   Implement `semantic_edges` table migration/schema.
     *   Implement `PostgresSemanticEdgeRepository`.
@@ -200,13 +200,13 @@ cogmem/
     *   Implement `PostgresEpisodicRepository` methods to store/retrieve `causal_links`.
     *   *TDD:* Integration tests for `SemanticEdgeRepository`. Update episodic/node repository tests to verify `last_accessed` updates and `accessibility_score` sorting. Test causal link storage/retrieval.
 
-3.  **Infrastructure Layer (Engines - Phase 3):**
+3.  **Infrastructure Layer (Engines - Phase 3)(TDD):**
     *   Implement `DecayLogic` (`internal/infrastructure/engine/decay`) applying the formula from ADD, using configured base rate and valence weight. It will need to fetch items, calculate new scores, and update them via repositories. Consider batching updates.
     *   Update `ScriptRepository` to potentially filter scripts based on `allowed_personas` if a persona hint is provided.
     *   Update `ScriptExecutor` (Lua) to potentially inject the current `Persona` hint into the Lua environment for scripts to use conditionally.
     *   *TDD:* Unit tests for `DecayLogic` calculation. Integration test for decay logic interacting with DB (can use manipulated timestamps). Update scripting tests for persona filtering/injection.
 
-4.  **Application Layer (Phase 3):**
+4.  **Application Layer (Phase 3)(TDD):**
     *   Create `DecayService` (`internal/application/service`). Implement `RunDecayCycle(ctx)` which uses `DecayLogic`.
     *   Create `EdgeService` (`internal/application/service`). Implement `StoreEdge`, `FindEdges`. Inject `SemanticEdgeRepository`.
     *   Modify `MemoryService` and `NodeService` retrieval use cases to update `last_accessed`.
@@ -214,7 +214,7 @@ cogmem/
     *   Modify `ScriptingService` `ExecuteScript` use case to accept an optional `Persona` hint and pass it down for filtering/injection.
     *   *TDD:* Unit tests for `DecayService`, `EdgeService`. Update other service tests for `last_accessed`, causal links, and persona handling.
 
-5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 3):**
+5.  **Public Library Interface (`pkg/cogmem`, `pkg/client` - Phase 3)(TDD):**
     *   Add `AccessibilityScore`, `LastAccessed` to relevant output DTOs (`EpisodicMemoryOutput`, `SemanticNodeOutput`).
     *   Add `CausalLinks` to `EpisodicMemoryInput/Output`.
     *   Add `StoreSemanticEdge`, `FindEdges` methods to `CogMemClient`. Add `SemanticEdgeInput/Output` DTOs.
@@ -227,14 +227,14 @@ cogmem/
     *   Update `NewClient` to initialize the `EdgeService` and `DecayService`.
     *   *TDD:* Integration tests for `StartBackgroundTasks` (verify it starts/stops, potentially mock decay logic for testing lifecycle). Integration tests for `StoreSemanticEdge`, `FindEdges`. Integration tests for storing/retrieving causal links via client. Test `ExecuteScript` with persona hints. Verify `accessibility_score` appears in relevant DTOs.
 
-6.  **Refinement & Polish:**
+6.  **Refinement & Polish(TDD):**
     *   Implement Valence Aggregation for Semantic Nodes (potentially as part of `StoreEpisodic` or a background task).
     *   Refine error handling across the library (use custom error types).
     *   Add more comprehensive logging.
     *   Profile performance-critical paths (retrieval, decay) and optimize queries/code.
     *   Add more complex default Lua scripts (`scripts/`).
 
-7.  **Documentation & Examples:**
+7.  **Documentation & Examples(TDD):**
     *   Document Lifespan/Decay mechanism, configuration, and background task management.
     *   Document Causal Layer usage.
     *   Document Semantic Edge operations.

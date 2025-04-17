@@ -1,0 +1,23 @@
+name: cogmem-dev
+services:
+  postgres:
+    # PostgreSQL image with pgvector extension (Postgres 15)
+    image: pgvector/pgvector:pg17
+    container_name: cogmem_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: cogmem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    name: cogmem_postgres_data
+    driver: local
+
+networks:
+  cogmem_default:
+    name: cogmem_default

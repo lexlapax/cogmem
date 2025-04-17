@@ -1,66 +1,34 @@
-# [Your Project Name] - Project Template
+# CogMem Go Library
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- Choose your license -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/lexlapax/cogmem)](https://goreportcard.com/report/github.com/lexlapax/cogmem)
+[![Build Status](https://github.com/lexlapax/cogmem/actions/workflows/ci.yml/badge.svg)](https://github.com/lexlapax/cogmem/actions)
 
-**This is a template README. Please update it for your specific project!**
-
----
-
-## Overview
-
-This repository serves as a starting template for building `[briefly describe the type of project, e.g., a full-stack application, a mobile app with backend services]`. It provides a structured foundation based on **Feature-Based Slicing** and **Layered Architecture (Onion/Clean)** principles, aiming to promote:
-
-*   **Maintainability:** Easier to understand, modify, and fix bugs.
-*   **Scalability:** Supports growing complexity and team size.
-*   **Testability:** Facilitates unit, integration, and end-to-end testing.
-*   **Flexibility:** Allows easier adaptation to new requirements or technologies.
+CogMem is a cognitively-inspired memory library for Go, providing persistent, structured, dynamic, and context-rich long-term memory (episodic, semantic, procedural) functionality for AI agent systems. This repository contains the Go module scaffold under `cogmem-go/`, currently in Phase 1 of implementation.
 
 ---
 
-## Core Concepts & Structure
+## Features
 
-The architectural philosophy guiding this template is detailed in:
+CogMem implements:
 
-*   **[Project Structure Philosophy](./project-structure.md)**
+* Clean/Hexagonal Architecture (Domain, Application, Infrastructure)
+* PostgreSQL persistence with the pgvector extension
+* Partitioned Episodic Memory storage and retrieval (vector similarity & recency filters)
+* Modular scripting via Lua engine
+* Valence scoring and metadata support
+* Test-Driven Development (TDD) and Docker-first workflow
 
-This template organizes code by platform first, with detailed structure guides within each platform's directory:
-
-*   `backend-go/`: Go backend service structure.
-*   `backend-python/`: Python backend service structure.
-*   `frontend-react/`: React web frontend structure.
-*   `mobile-android/`: Native Android application structure.
-*   `mobile-ios/`: Native iOS application structure.
-*   `mobile-crossplatform/`: Cross-platform (Flutter/React Native) mobile app structure.
 
 ---
 
-## How to Use This Template
+## Current Status
 
-1.  **Clone/Copy:** Clone this repository or copy its contents to start your new project.
-2.  **Select Platforms:** Keep the platform directory(ies) relevant to your project (e.g., `backend-go` and `frontend-react`). Delete the others.
-3.  **Define Requirements:** Fill out the **[Product Requirements Document (PRD)](./prd.md)** template with your project's specific goals and features.
-4.  **Design Architecture:** Detail your technical choices and design in the **[Architecture Document](./architecture.md)** template, referencing the PRD and structure philosophy.
-5.  **Plan Implementation:** Break down the work into phases and outline the execution plan in the **[Implementation Plan](./implementation-plan.md)** template.
-6.  **Customize README:** **Replace the contents of this README.md** file with information specific to *your* project (see sections below).
-7.  **Develop:** Start building your features within the chosen platform structure(s), following the layered principles and implementation plan.
+See [Implementation Plan](implementation-plan.md) for the full roadmap and upcoming tasks.
 
----
+## Getting Started
 
-## Key Documents
 
-*   **Project Structure Philosophy:** [./project-structure.md](./project-structure.md)
-*   **Product Requirements (Template):** [./prd.md](./prd.md) - **FILL THIS OUT!**
-*   **Architecture Document (Template):** [./architecture.md](./architecture.md) - **FILL THIS OUT!**
-*   **Implementation Plan (Template):** [./implementation-plan.md](./implementation-plan.md) - **FILL THIS OUT!**
-*   *(Add links to platform-specific readmes once chosen, e.g., [Backend README](./backend-go/readme.md))*
-
----
-
-**( !!! IMPORTANT: Delete the sections above and fill out the sections below for your actual project !!! )**
-
----
-
-# [Your Actual Project Name]
+# CogMem
 
 <!-- Short, engaging description of your project. What does it do? Who is it for? -->
 
@@ -84,105 +52,88 @@ This template organizes code by platform first, with detailed structure guides w
 
 ### Prerequisites
 
-*   `[List software needed, e.g., Node.js v16+, Go 1.19+, Docker, Python 3.10+, Xcode 14+, Android Studio]`
-*   `[Any necessary accounts or API keys]`
+* Go 1.24+
+* Docker & Docker Compose
+* PostgreSQL 15+ (for production/testing) or use Docker Compose for local development
 
-### Installation
+### Clone and Install
 
-1.  Clone the repository:
-    ```bash
-    git clone [your-repo-url]
-    cd [your-project-name]
-    ```
-2.  Install dependencies for each relevant part:
-    ```bash
-    # Example for backend-go (if applicable)
-    cd backend-go
-    go mod download
-    cd ..
+```bash
+git clone https://github.com/lexlapax/cogmem.git
+cd cogmem-go
+go mod download
+```
 
-    # Example for frontend-react (if applicable)
-    cd frontend-react
-    npm install # or yarn install
-    cd ..
+### Docker Compose (Local PostgreSQL)
 
-    # Example for mobile-crossplatform (if applicable)
-    cd mobile-crossplatform
-    flutter pub get # or npm install / yarn install
-    cd ..
-    ```
-3.  Set up environment variables:
-    *   `[Explain how to set up .env files or similar configuration]`
+```bash
+docker-compose up -d
+```
 
-### Running the Application
-
-*   **Backend:**
-    ```bash
-    # Example for backend-go
-    cd backend-go
-    go run cmd/server/main.go
-    ```
-*   **Frontend:**
-    ```bash
-    # Example for frontend-react
-    cd frontend-react
-    npm run dev # or yarn dev
-    ```
-*   **Mobile:**
-    ```bash
-    # Example for mobile-crossplatform (Flutter)
-    cd mobile-crossplatform
-    flutter run
-    ```
-    *   `[Add instructions for running on specific simulators/devices]`
+*Note:* A `docker-compose.yml` providing PostgreSQL with pgvector support will be added as part of the infrastructure setup (Phase 1).
 
 ## Key Documentation
 
 Understand the project goals, design, and plan:
 
-*   **Product Requirements:** [./prd.md](./prd.md)
-*   **Architecture:** [./architecture.md](./architecture.md)
+## Configuration
+
+CogMem uses Viper for configuration, loading in order:
+1. `config.yaml` in the working directory
+2. `.env` file
+3. Environment variables
+
+Example `config.yaml` placed alongside your application:
+```yaml
+database_url: postgres://postgres:password@localhost:5432/cogmem?sslmode=disable
+embedding_dim: 1536
+decay_base_rate: 0.01
+decay_valence_weight: 0.5
+decay_interval: 1h
+# Additional settings (e.g., Lua sandbox) follow here
+```
 *   **Implementation Plan:** [./implementation-plan.md](./implementation-plan.md)
 *   **Structure Philosophy:** [./project-structure.md](./project-structure.md)
 
-## Usage
-
-<!-- How does a user interact with the deployed application/service? -->
-<!-- Include screenshots or GIFs if helpful. -->
-
 ## Project Structure
 
-A high-level overview of the project structure philosophy can be found here: [Project Structure Philosophy](./project-structure.md).
+High-level layout under `cogmem-go/`:
 
-Detailed structures for each component:
-*   `[Link to backend-go/readme.md or project-structure.md]`
-*   `[Link to frontend-react/readme.md or project-structure.md]`
-*   `[Link to mobile-android/readme.md or project-structure.md]`
-*   ...etc.
-
-## Running Tests
-
-<!-- Instructions on how to execute automated tests. -->
-
-```bash
-# Example for backend-go
-cd backend-go
-go test ./...
-
-# Example for frontend-react
-cd frontend-react
-npm test # or yarn test
-
-# Example for mobile-crossplatform (Flutter)
-cd mobile-crossplatform
-flutter test
+```text
+cogmem-go/
+├── cmd/                      # CLI or example consumers
+├── internal/
+│   ├── domain/               # Entities, repository & service interfaces
+│   ├── application/          # Use-case services and ports
+│   ├── infrastructure/       # Persistence adapters, engines, config, logging
+│   └── port/                 # Shared interface definitions
+├── pkg/                      # Public client interface and implementation
+├── migrations/               # Database migration scripts
+├── scripts/                  # Default/example Lua scripts
+├── test/integration/         # Integration tests and fixtures
+├── go.mod
+└── go.sum
 ```
+
+## Documentation
+
+
+## Testing
+
+Run all unit and integration tests:
+```bash
+cd cogmem-go
+go test ./...
+```
+Integration tests will spin up PostgreSQL with pgvector via Testcontainers.
 ## Other Considerations
 ### Deployment
 <!-- Briefly describe the deployment process or link to more detailed documentation. -->
 <!-- Mention CI/CD pipelines if applicable. -->
-### Contributing
-<!-- Guidelines for contributing to the project. -->
-Please read CONTRIBUTING.md (you may need to create this file) for details on our code of conduct, and the process for submitting pull requests.
-License
-This project is licensed under the [Your Chosen License, e.g., MIT] License - see the LICENSE file (you may need to create this file) for details.
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## License
+
+TBD

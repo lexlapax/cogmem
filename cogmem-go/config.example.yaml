@@ -1,0 +1,12 @@
+# Default configuration for CogMem Go Library
+
+database_url: "postgres://user:password@localhost:5432/cogmem?sslmode=disable"
+embedding_dim: 1536
+decay_base_rate: 0.01
+decay_valence_weight: 0.5
+decay_interval: "1h"
+
+# Lua scripting sandbox settings (future)
+#lua_sandbox:
+#  timeout: "5s"
+#  allow_io: false
