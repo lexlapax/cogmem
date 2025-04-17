@@ -61,13 +61,17 @@ See [Implementation Plan](implementation-plan.md) for the full roadmap and upcom
 ```bash
 git clone https://github.com/lexlapax/cogmem.git
 cd cogmem-go
-go mod download
+make tidy    # download Go module dependencies
 ```
 
 ### Docker Compose (Local PostgreSQL)
 
 ```bash
-docker-compose up -d
+make docker-up   # spin up Postgres+pgvector
+```
+Then run library checks and tests:
+```bash
+make all         # fmt, vet, and test
 ```
 
 *Note:* A `docker-compose.yml` providing PostgreSQL with pgvector support will be added as part of the infrastructure setup (Phase 1).

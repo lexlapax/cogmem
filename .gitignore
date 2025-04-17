@@ -4,6 +4,7 @@
 #/binary-name
 #/binary-name.exe
 
+
 # Dependencies
 # Go modules automatically handle dependencies via go.mod and go.sum
 # The vendor directory is generally not committed with Go modules
@@ -51,6 +52,10 @@ Desktop.ini
 
 # Build Session Data (GoLand specific, others might exist)
 .build/
+
+# Go Build Cache
+.gocache
+
 
 # Go workspace file (Go 1.18+)
 go.work
