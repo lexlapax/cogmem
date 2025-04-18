@@ -84,6 +84,7 @@ cogmem/
         *   `FindRecent` returns correctly ordered results.
         *   **Crucially:** Test that queries only return data matching the provided `PartitionContext`, and fail/return empty for incorrect contexts.
 
+
 4.  **Application Layer (Phase 1) (TDD):**
     *   Define `MemoryService` interface (`internal/application/port`) and implementation (`internal/application/service`).
     *   Implement use cases: `StoreEpisodic(ctx, pCtx, dto)`, `RetrieveEpisodic(ctx, pCtx, queryDto)`.
@@ -108,7 +109,7 @@ cogmem/
 6.  **Documentation & Examples (TDD):**
     *   Initialize `README.md` explaining library purpose, setup, and Phase 1 usage.
     *   Add GoDoc comments to public interfaces, structs, and functions.
-    *   Provide a simple example in `cmd/` showing how to initialize and use the Phase 1 client methods.
+    *   Provide a simple example in `cmd/example_client` showing how to initialize and use the Phase 1 client methods. make sure that's also TDD
 
 **Phase 1 Outcome:** A consumable Go library (`cogmem`) installable via `go get`. A consuming application can initialize the client, connect to a Postgres DB (managed externally), store episodic memories with partitioning, and retrieve them via vector search or recentness. The library structure follows Clean Architecture principles and is supported by unit and integration tests.
 

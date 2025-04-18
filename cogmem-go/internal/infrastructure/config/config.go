@@ -26,10 +26,14 @@ func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
 
 	v := viper.New()
-	// Look for a file named config.yaml in the working directory
-	v.SetConfigName("config")
-	v.SetConfigType("yaml")
-	v.AddConfigPath(".")
+    // Look for a file named config.yaml in the working directory or parent dirs
+    v.SetConfigName("config")
+    v.SetConfigType("yaml")
+    // Search in current directory
+    v.AddConfigPath(".")
+    // Also allow reading config from module root when tests run in subdirectories
+    v.AddConfigPath("..")
+    v.AddConfigPath("../..")
 
 	// Read configuration file (optional)
 	if err := v.ReadInConfig(); err != nil {

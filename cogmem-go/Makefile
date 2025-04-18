@@ -15,7 +15,9 @@ test:
 
 # Run integration tests only
 integration-test:
-	go test ./test/integration/...
+	@$(MAKE) docker-up
+	@go test ./test/integration/...
+	@$(MAKE) docker-down
 
 # Format code
 fmt:

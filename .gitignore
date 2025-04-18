@@ -55,6 +55,7 @@ Desktop.ini
 
 # Go Build Cache
 .gocache
+.tmp
 
 
 # Go workspace file (Go 1.18+)
