@@ -12,7 +12,7 @@ CogMem is a cognitively-inspired memory library for Go, providing persistent, st
 CogMem implements:
 
 * Clean/Hexagonal Architecture (Domain, Application, Infrastructure)
-* PostgreSQL persistence with the pgvector extension
+* PostgreSQL persistence with the pgvector extension (vector column & similarity search)
 * Partitioned Episodic Memory storage and retrieval (vector similarity & recency filters)
 * Modular scripting via Lua engine
 * Valence scoring and metadata support
@@ -24,13 +24,6 @@ CogMem implements:
 ## Current Status
 
 See [Implementation Plan](implementation-plan.md) for the full roadmap and upcoming tasks.
-
-## Getting Started
-
-
-# CogMem
-
-<!-- Short, engaging description of your project. What does it do? Who is it for? -->
 
 ## Table of Contents
 
@@ -66,15 +59,16 @@ make tidy    # download Go module dependencies
 
 ### Docker Compose (Local PostgreSQL)
 
-```bash
-make docker-up   # spin up Postgres+pgvector
-```
-Then run library checks and tests:
-```bash
-make all         # fmt, vet, and test
-```
+The `cogmem-go/docker-compose.yml` file includes a PostgreSQL service with the pgvector extension.
 
-*Note:* A `docker-compose.yml` providing PostgreSQL with pgvector support will be added as part of the infrastructure setup (Phase 1).
+```bash
+cd cogmem-go
+make docker-up    # spin up Postgres+pgvector
+```
+Run all formatting, vetting, and tests:
+```bash
+make all          # fmt, vet, and test
+```
 
 ## Key Documentation
 
@@ -97,7 +91,7 @@ decay_interval: 1h
 # Additional settings (e.g., Lua sandbox) follow here
 ```
 *   **Implementation Plan:** [./implementation-plan.md](./implementation-plan.md)
-*   **Structure Philosophy:** [./project-structure.md](./project-structure.md)
+*   **Architecture Design:** [./architecture-design-document.md](./architecture-design-document.md)
 
 ## Project Structure
 
@@ -119,17 +113,17 @@ cogmem-go/
 └── go.sum
 ```
 
-## Documentation
+## Running Tests
 
-
-## Testing
-
-Run all unit and integration tests:
+Run all unit tests:
 ```bash
 cd cogmem-go
-go test ./...
+make test         # unit & integration tests
 ```
-Integration tests will spin up PostgreSQL with pgvector via Testcontainers.
+Run integration tests (via Docker Compose):
+```bash
+make integration-test
+```
 ## Other Considerations
 ### Deployment
 <!-- Briefly describe the deployment process or link to more detailed documentation. -->
